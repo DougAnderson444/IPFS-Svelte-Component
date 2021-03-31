@@ -1,22 +1,36 @@
 <script>
 	import { onMount } from "svelte";
-	import * as IPFS from "ipfs-core";
+	import * as IPFS from "./IPFS.js";
 
-	export let ipfsNode
-	export let nodeId
+	export let ipfsNode;
+	export let nodeId;
 
 	onMount(async () => {
-		const ipfsNode = await IPFS.create();
+		ipfsNode = await IPFS.use();
+		console.info({ ipfsNode });
+		const { cid } = await ipfsNode.add("Hello world");
+		console.info("cid", cid);
 		const identity = await ipfsNode.id();
-		nodeId = identity.id
-		console.info('nodeId', nodeId);
+		nodeId = identity.id;
+		console.info("nodeId", nodeId);
 	});
 </script>
 
-<style>
-	h3 {
-		color: purple;
-	}
-</style>
+{#if ipfsNode}
+	<div>
+		{#await ipfsNode}
+			Awaiting ipfsNode
+		{:then ipfsNode}
+			<p>
+				Success! <br />
 
-<h3>Hello {nodeId}!</h3>
+				<b>IPFS loaded</b>
+				<br />NodeId:
+
+				{#if nodeId}
+					{nodeId}
+				{/if}
+			</p>
+		{:catch ipfsNode}Something went wrong with {ipfsNode}{/await}
+	</div>
+{/if}

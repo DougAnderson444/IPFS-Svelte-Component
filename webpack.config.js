@@ -6,8 +6,8 @@ const mode = process.env.NODE_ENV || 'development';
 const prod = mode === 'production';
 
 const name = pkg.name
-	.replace(/^(@\S+\/)?(svelte-)?(\S+)/, '$3')
-	.replace(/^\w/, m => m.toUpperCase())
+  .replace(/^(@\S+\/)?(svelte-)?(\S+)/, '$3')
+  .replace(/^\w/, m => m.toUpperCase())
   .replace(/-\w/g, m => m[1].toUpperCase());
 
 module.exports = [
@@ -15,11 +15,12 @@ module.exports = [
     name: 'es',
     experiments: { outputModule: true },
     output: {
-      module: true, enabledLibraryTypes: ['module'],
-      library: name,
-      libraryTarget: 'var',
-      libraryExport: 'default',
+      module: true,
+      enabledLibraryTypes: ['module'],
       filename: pkg.module,
+      library: name,
+      libraryExport: 'default',
+      libraryTarget: 'module',
       path: path.join(__dirname, ''),
     },
     entry: './src/index.js',
@@ -30,9 +31,12 @@ module.exports = [
       },
       extensions: ['.mjs', '.js', '.svelte'],
       mainFields: ['svelte', 'browser', 'module', 'main'],
-      fallback: { 
+      fallback: {
         "stream": require.resolve("stream-browserify"),
-        "dns":  require.resolve("dns-over-http-resolver")
+        "dns": require.resolve("dns-over-http-resolver"),
+        "util": require.resolve("util/"),
+        "url": require.resolve("url/"),
+        "assert": require.resolve("assert/")
       }
     },
     module: {
@@ -76,17 +80,18 @@ module.exports = [
         // }
       ]
     }
-  }, 
+  },
   {
     name: 'umd',
     output: {
       filename: pkg.main,
-      library: name,
+      library: name, // depends on the value of the output.libraryTarget, in 'umd' case, you need the library property to name your module
+      // uniqueName: name,
       libraryExport: 'default',
       libraryTarget: 'umd',
-      umdNamedDefine: true,
+      // umdNamedDefine: true, // names the AMD module of the UMD build
       path: path.join(__dirname, ''),
-      globalObject: 'window'
+      globalObject: 'self' // self for Web-like targets
     },
     entry: './src/index.js',
     mode: mode,
@@ -96,9 +101,12 @@ module.exports = [
       },
       extensions: ['.mjs', '.js', '.svelte'],
       mainFields: ['svelte', 'browser', 'module', 'main'],
-      fallback: { 
+      fallback: {
         "stream": require.resolve("stream-browserify"),
-        "dns":  require.resolve("dns-over-http-resolver")
+        "dns": require.resolve("dns-over-http-resolver"),
+        "util": require.resolve("util/"),
+        "url": require.resolve("url/"),
+        "assert": require.resolve("assert/")
       }
     },
     module: {
