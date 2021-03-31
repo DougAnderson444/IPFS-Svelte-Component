@@ -1,15 +1,22 @@
 {
   "name": "ipfs-svelte-component",
-  "version": "0.0.1",
-  "module": "dist/index.mjs",
+  "version": "0.0.2",
   "main": "dist/index.js",
+  "module": "dist/es/index.js",
   "scripts": {
     "build": "rollup -c",
-    "build:webpack": "cross-env NODE_ENV=production webpack",
+    "build:webpack": "webpack --config webpack.config.js",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "ipfs-core": "^0.3.0"
+    "assert": "^2.0.0",
+    "available-typed-arrays": "^1.0.2",
+    "call-bind": "^1.0.2",
+    "dns-over-http-resolver": "^1.2.0",
+    "ipfs-core": "^0.5.4",
+    "stream-browserify": "^3.0.0",
+    "url": "^0.11.0",
+    "util": "^0.12.3"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.1",
@@ -23,8 +30,9 @@
     "rollup-plugin-node-polyfills": "^0.2.1",
     "rollup-plugin-svelte": "^6.0.0",
     "svelte": "^3.0.0",
-    "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.0"
+    "svelte-loader": "^2.13.6",
+    "webpack": "^5.9.0",
+    "webpack-cli": "^4.2.0"
   },
   "keywords": [
     "svelte"
