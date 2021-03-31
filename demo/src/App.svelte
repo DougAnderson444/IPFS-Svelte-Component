@@ -5,10 +5,24 @@
 
 <main>
 	<h1>Hello {ipfsNode ? true : false}!</h1>
-	<p>
-		Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn
-		how to build Svelte apps.
-	</p>
+	{#if ipfsNode}
+		<div>
+			{#await ipfsNode.id()}
+				Awaiting ipfsNode
+			{:then identity}
+				<p>
+					Success! <br />
+
+					<b>IPFS loaded</b>
+					<br />NodeId:
+
+					{#if identity && identity.id}
+						{identity.id}
+					{/if}
+				</p>
+			{:catch ipfsNode}Something went wrong with {ipfsNode}{/await}
+		</div>
+	{/if}
 </main>
 <IPFSComp bind:ipfsNode />
 
