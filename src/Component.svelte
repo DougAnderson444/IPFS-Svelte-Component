@@ -7,9 +7,9 @@
 
 	onMount(async () => {
 		await IPFS.use();
-		console.info({ ipfs }); // avilable as a global variable
+		// console.info({ ipfs }); // avilable as a global variable
 		ipfsNode = ipfs; // bind the prop to the global
-		console.info({ ipfsNode });
+		// Now you can use ipfs globally to do things like
 		const identity = await ipfsNode.id();
 		nodeId = identity.id;
 		console.info("nodeId", nodeId);
