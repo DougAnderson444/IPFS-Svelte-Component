@@ -42,7 +42,8 @@
     "webpack-cli": "^4.2.0"
   },
   "keywords": [
-    "svelte"
+    "svelte",
+    "ipfs"
   ],
   "files": [
     "src",
