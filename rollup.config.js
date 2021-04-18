@@ -17,10 +17,11 @@ export default {
   input: './src/index.js',
   output: [
     {
-      // file: pkg.module,
-      dir: 'dist/es',
+      file: pkg.module,
+      // dir: 'dist/es',
       format: 'es',
-      interop: 'auto'
+      interop: 'auto',
+      inlineDynamicImports: true
     },
     {
       file: pkg.main,
