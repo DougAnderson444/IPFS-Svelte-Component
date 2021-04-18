@@ -10,3 +10,5 @@ export const global =
         : typeof window !== 'undefined'
           ? window
           : {}
+
+if (globalThis && globalThis.process && globalThis.process.env) globalThis.process.env.LIBP2P_FORCE_PNET = false

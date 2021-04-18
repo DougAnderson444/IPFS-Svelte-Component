@@ -79208,7 +79208,7 @@ var require_constants35 = __commonJS((exports2, module2) => {
 // node_modules/netmask/lib/netmask.js
 var require_netmask = __commonJS((exports2) => {
   (function() {
-    var Netmask, ip2long, long2ip;
+    var Netmask, atob, chr, chr0, chrA, chra, ip2long, long2ip;
     long2ip = function(long) {
       var a, b, c, d;
       a = (long & 255 << 24) >>> 24;
@@ -79218,25 +79218,100 @@ var require_netmask = __commonJS((exports2) => {
       return [a, b, c, d].join(".");
     };
     ip2long = function(ip) {
-      var b, byte, i, j, len;
-      b = (ip + "").split(".");
-      if (b.length === 0 || b.length > 4) {
+      var b, c, i, j, n, ref;
+      b = [];
+      for (i = j = 0; j <= 3; i = ++j) {
+        if (ip.length === 0) {
+          break;
+        }
+        if (i > 0) {
+          if (ip[0] !== ".") {
+            throw new Error("Invalid IP");
+          }
+          ip = ip.substring(1);
+        }
+        ref = atob(ip), n = ref[0], c = ref[1];
+        ip = ip.substring(c);
+        b.push(n);
+      }
+      if (ip.length !== 0) {
         throw new Error("Invalid IP");
       }
-      for (i = j = 0, len = b.length; j < len; i = ++j) {
-        byte = b[i];
-        if (isNaN(parseInt(byte, 10))) {
-          throw new Error("Invalid byte: " + byte);
-        }
-        if (byte < 0 || byte > 255) {
-          throw new Error("Invalid byte: " + byte);
+      switch (b.length) {
+        case 1:
+          if (b[0] > 4294967295) {
+            throw new Error("Invalid IP");
+          }
+          return b[0] >>> 0;
+        case 2:
+          if (b[0] > 255 || b[1] > 16777215) {
+            throw new Error("Invalid IP");
+          }
+          return (b[0] << 24 | b[1]) >>> 0;
+        case 3:
+          if (b[0] > 255 || b[1] > 255 || b[2] > 65535) {
+            throw new Error("Invalid IP");
+          }
+          return (b[0] << 24 | b[1] << 16 | b[2]) >>> 0;
+        case 4:
+          if (b[0] > 255 || b[1] > 255 || b[2] > 255 || b[3] > 255) {
+            throw new Error("Invalid IP");
+          }
+          return (b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3]) >>> 0;
+        default:
+          throw new Error("Invalid IP");
+      }
+    };
+    chr = function(b) {
+      return b.charCodeAt(0);
+    };
+    chr0 = chr("0");
+    chra = chr("a");
+    chrA = chr("A");
+    atob = function(s) {
+      var base, dmax, i, n, start;
+      n = 0;
+      base = 10;
+      dmax = "9";
+      i = 0;
+      if (s.length > 1 && s[i] === "0") {
+        if (s[i + 1] === "x" || s[i + 1] === "X") {
+          i += 2;
+          base = 16;
+        } else if ("0" <= s[i + 1] && s[i + 1] <= "9") {
+          i++;
+          base = 8;
+          dmax = "7";
         }
       }
-      return ((b[0] || 0) << 24 | (b[1] || 0) << 16 | (b[2] || 0) << 8 | (b[3] || 0)) >>> 0;
+      start = i;
+      while (i < s.length) {
+        if ("0" <= s[i] && s[i] <= dmax) {
+          n = n * base + (chr(s[i]) - chr0) >>> 0;
+        } else if (base === 16) {
+          if ("a" <= s[i] && s[i] <= "f") {
+            n = n * base + (10 + chr(s[i]) - chra) >>> 0;
+          } else if ("A" <= s[i] && s[i] <= "F") {
+            n = n * base + (10 + chr(s[i]) - chrA) >>> 0;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+        if (n > 4294967295) {
+          throw new Error("too large");
+        }
+        i++;
+      }
+      if (i === start) {
+        throw new Error("empty octet");
+      }
+      return [n, i];
     };
     Netmask = function() {
       function Netmask2(net, mask) {
-        var error, error1, error2, i, j, ref;
+        var error, i, j, ref;
         if (typeof net !== "string") {
           throw new Error("Missing `net' parameter");
         }
@@ -79244,28 +79319,13 @@ var require_netmask = __commonJS((exports2) => {
           ref = net.split("/", 2), net = ref[0], mask = ref[1];
         }
         if (!mask) {
-          switch (net.split(".").length) {
-            case 1:
-              mask = 8;
-              break;
-            case 2:
-              mask = 16;
-              break;
-            case 3:
-              mask = 24;
-              break;
-            case 4:
-              mask = 32;
-              break;
-            default:
-              throw new Error("Invalid net address: " + net);
-          }
+          mask = 32;
         }
         if (typeof mask === "string" && mask.indexOf(".") > -1) {
           try {
             this.maskLong = ip2long(mask);
-          } catch (error12) {
-            error = error12;
+          } catch (error1) {
+            error = error1;
             throw new Error("Invalid mask: " + mask);
           }
           for (i = j = 32; j >= 0; i = --j) {
@@ -79274,7 +79334,7 @@ var require_netmask = __commonJS((exports2) => {
               break;
             }
           }
-        } else if (mask) {
+        } else if (mask || mask === 0) {
           this.bitmask = parseInt(mask, 10);
           this.maskLong = 0;
           if (this.bitmask > 0) {
@@ -79285,8 +79345,8 @@ var require_netmask = __commonJS((exports2) => {
         }
         try {
           this.netLong = (ip2long(net) & this.maskLong) >>> 0;
-        } catch (error22) {
-          error = error22;
+        } catch (error1) {
+          error = error1;
           throw new Error("Invalid net address: " + net);
         }
         if (!(this.bitmask <= 32)) {
@@ -79317,20 +79377,15 @@ var require_netmask = __commonJS((exports2) => {
         return new Netmask2(long2ip(this.netLong + this.size * count), this.mask);
       };
       Netmask2.prototype.forEach = function(fn) {
-        var index, j, k, len, long, range, ref, ref1, results, results1;
-        range = function() {
-          results = [];
-          for (var j2 = ref = ip2long(this.first), ref12 = ip2long(this.last); ref <= ref12 ? j2 <= ref12 : j2 >= ref12; ref <= ref12 ? j2++ : j2--) {
-            results.push(j2);
-          }
-          return results;
-        }.apply(this);
-        results1 = [];
-        for (index = k = 0, len = range.length; k < len; index = ++k) {
-          long = range[index];
-          results1.push(fn(long2ip(long), long, index));
+        var index, lastLong, long;
+        long = ip2long(this.first);
+        lastLong = ip2long(this.last);
+        index = 0;
+        while (long <= lastLong) {
+          fn(long2ip(long), long, index);
+          index++;
+          long++;
         }
-        return results1;
       };
       Netmask2.prototype.toString = function() {
         return this.base + "/" + this.bitmask;
@@ -79344,57 +79399,34 @@ var require_netmask = __commonJS((exports2) => {
 });
 
 // node_modules/private-ip/lib/index.js
-var require_lib7 = __commonJS((exports2) => {
-  "use strict";
-  Object.defineProperty(exports2, "__esModule", {
-    value: true
-  });
+var require_lib7 = __commonJS((exports2, module2) => {
   var Netmask = require_netmask().Netmask;
-  var isIp = require_is_ip();
-  function ipv4Check(params) {
-    var privateRanges = ["0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.0.0/29", "192.0.0.8/32", "192.0.0.9/32", "192.0.0.10/32", "192.0.0.170/32", "192.0.0.171/32", "192.0.2.0/24", "192.31.196.0/24", "192.52.193.0/24", "192.88.99.0/24", "192.168.0.0/16", "192.175.48.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4", "255.255.255.255/32"].map(function(b) {
-      return new Netmask(b);
-    });
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = void 0;
-    try {
-      for (var _iterator = privateRanges[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var r = _step.value;
-        if (r.contains(params))
-          return true;
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator.return) {
-          _iterator.return();
-        }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
-        }
-      }
+  var ip_regex = require_ip_regex();
+  var PRIVATE_IP_RANGES = ["0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.0.0/29", "192.0.0.8/32", "192.0.0.9/32", "192.0.0.10/32", "192.0.0.170/32", "192.0.0.171/32", "192.0.2.0/24", "192.31.196.0/24", "192.52.193.0/24", "192.88.99.0/24", "192.168.0.0/16", "192.175.48.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4", "255.255.255.255/32"];
+  function ipv4_check(ip_addr) {
+    const blocks = [...PRIVATE_IP_RANGES].map((ip_range) => new Netmask(ip_range));
+    for (let r of blocks) {
+      if (r.contains(ip_addr))
+        return true;
     }
     return false;
   }
-  function ipv6Check(params) {
-    return /^::$/.test(params) || /^::1$/.test(params) || /^::f{4}:([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(params) || /^::f{4}:0.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(params) || /^64:ff9b::([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(params) || /^100::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(params) || /^2001::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(params) || /^2001:2[0-9a-fA-F]:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(params) || /^2001:db8:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(params) || /^2002:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(params) || /^f[c-d]([0-9a-fA-F]{2,2}):/i.test(params) || /^fe[8-9a-bA-B][0-9a-fA-F]:/i.test(params) || /^ff([0-9a-fA-F]{2,2}):/i.test(params);
+  function ipv6_check(ip_addr) {
+    return /^::$/.test(ip_addr) || /^::1$/.test(ip_addr) || /^::f{4}:([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(ip_addr) || /^::f{4}:0.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(ip_addr) || /^64:ff9b::([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$/.test(ip_addr) || /^100::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(ip_addr) || /^2001::([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(ip_addr) || /^2001:2[0-9a-fA-F]:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(ip_addr) || /^2001:db8:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(ip_addr) || /^2002:([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4}):?([0-9a-fA-F]{0,4})$/.test(ip_addr) || /^f[c-d]([0-9a-fA-F]{2,2}):/i.test(ip_addr) || /^fe[8-9a-bA-B][0-9a-fA-F]:/i.test(ip_addr) || /^ff([0-9a-fA-F]{2,2}):/i.test(ip_addr);
   }
-  exports2.default = function(ip) {
-    if (isIp.v4(ip) || ip.startsWith("0")) {
-      return ipv4Check(ip);
-    }
-    return ipv6Check(ip);
+  module2.exports = (ip_addr) => {
+    if (ip_regex.v6().test(ip_addr))
+      return ipv6_check(ip_addr);
+    else if (ip_regex().test(ip_addr) || ip_addr.startsWith("0"))
+      return ipv4_check(ip_addr);
+    return false;
   };
 });
 
 // node_modules/private-ip/index.js
 var require_private_ip = __commonJS((exports2, module2) => {
   "use strict";
-  module2.exports = require_lib7().default;
+  module2.exports = require_lib7();
 });
 
 // node_modules/libp2p-utils/src/multiaddr/is-private.js
@@ -123737,6 +123769,8 @@ var require_src74 = __commonJS((exports2, module2) => {
 var Buffer = require_buffer().Buffer;
 var process = require_browser();
 var global = typeof global !== "undefined" ? global : typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};
+if (globalThis && globalThis.process && globalThis.process.env)
+  globalThis.process.env.LIBP2P_FORCE_PNET = false;
 
 // node_modules/nanoid/url-alphabet/index.js
 var urlAlphabet = "ModuleSymbhasOwnPr-0123456789ABCDEFGHNRVfgctiUvz_KqYTJkLxpZXIjQW";
