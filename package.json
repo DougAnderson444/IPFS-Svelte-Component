@@ -1,6 +1,7 @@
 {
   "name": "ipfs-svelte-component",
-  "version": "0.0.5",
+  "version": "0.0.6",
+  "svelte": "src/index.js",
   "main": "dist/index.js",
   "module": "dist/es/index.js",
   "scripts": {
